@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Target vs Achievement — Sales Dashboard 2021</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+[data-theme="dark"] {
+  --bg:#0d0f14; --bg2:#13161d; --bg3:#1a1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f2f8; --text2:#8b92a8; --text3:#555d70;
+  --grid-ln:rgba(255,255,255,0.04); --prog-bg:rgba(255,255,255,0.06);
+  --tbl-hov:rgba(255,255,255,0.02); --tgt-bar:rgba(255,255,255,0.07);
+  --tgt-bdr:rgba(255,255,255,0.22); --pie-bdr:#13161d;
+  --ref-ln:rgba(255,255,255,0.35); --toggle-bg:#1a1e28;
+}
+[data-theme="light"] {
+  --bg:#f4f6fb; --bg2:#ffffff; --bg3:#eef0f6;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.15);
+  --text:#111827; --text2:#4b5563; --text3:#9ca3af;
+  --grid-ln:rgba(0,0,0,0.05); --prog-bg:rgba(0,0,0,0.07);
+  --tbl-hov:rgba(0,0,0,0.02); --tgt-bar:rgba(0,0,0,0.05);
+  --tgt-bdr:rgba(0,0,0,0.18); --pie-bdr:#ffffff;
+  --ref-ln:rgba(0,0,0,0.30); --toggle-bg:#eef0f6;
+}
+:root { --accent:#4f8ef7; --accent2:#7c3aed; --green:#22c55e; --red:#ef4444; --r2:14px; }
+
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background .3s,color .3s; }
+
+.topbar { background:var(--bg2); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; transition:background .3s; }
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.logo-box { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; color:#fff; }
+.topbar-title { font-size:15px; font-weight:600; color:var(--text); letter-spacing:-.2px; }
+.topbar-sub { font-size:12px; color:var(--text2); margin-top:1px; }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.badge-live { display:flex; align-items:center; gap:6px; background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.25); border-radius:20px; padding:4px 12px; font-size:11px; color:var(--green); font-weight:500; }
+.dot-live { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.theme-btn { display:flex; align-items:center; gap:7px; background:var(--toggle-bg); border:1px solid var(--border2); border-radius:20px; padding:5px 14px; cursor:pointer; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--text2); transition:all .2s; }
+.theme-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+.main { padding:26px 32px; max-width:1300px; margin:0 auto; }
+
+.filter-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r2); padding:13px 18px; margin-bottom:22px; transition:background .3s; }
+.filter-group { display:flex; align-items:center; gap:8px; }
+.filter-label { font-size:11px; color:var(--text3); font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+select { background:var(--bg3); border:1px solid var(--border2); color:var(--text); font-family:'DM Sans',sans-serif; font-size:12px; padding:6px 28px 6px 10px; border-radius:8px; cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b92a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:border-color .2s,background .3s,color .3s; }
+select:hover { border-color:var(--accent); }
+.filter-divider { width:1px; height:24px; background:var(--border); margin:0 4px; }
+.reset-btn { background:transparent; border:1px solid var(--border2); color:var(--text2); font-family:'DM Sans',sans-serif; font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; transition:all .2s; }
+.reset-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.kpi-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r2); padding:18px 20px; position:relative; overflow:hidden; transition:border-color .2s,background .3s; }
+.kpi-card:hover { border-color:var(--border2); }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent-color,var(--accent)),transparent); }
+.kpi-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; font-weight:500; margin-bottom:10px; }
+.kpi-value { font-size:26px; font-weight:600; letter-spacing:-.5px; font-family:'DM Mono',monospace; }
+.kpi-footer { font-size:11px; color:var(--text2); margin-top:6px; display:flex; align-items:center; gap:5px; }
+.kpi-dot { width:6px; height:6px; border-radius:50%; }
+
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.grid1 { display:grid; grid-template-columns:1fr; gap:14px; margin-bottom:14px; }
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r2); padding:18px 20px; transition:background .3s,border-color .3s; }
+.card-title { font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+.card-title-tag { font-size:10px; font-weight:500; padding:2px 8px; border-radius:20px; background:rgba(79,142,247,.12); color:var(--accent); border:1px solid rgba(79,142,247,.2); }
+.legend { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; }
+.leg-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text2); }
+.leg-dot { width:8px; height:8px; border-radius:2px; }
+
+.perf-table { width:100%; border-collapse:collapse; font-size:12px; }
+.perf-table th { text-align:left; font-weight:500; color:var(--text3); padding:8px 10px; border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.5px; font-size:10px; }
+.perf-table td { padding:10px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+.perf-table tr:last-child td { border-bottom:none; }
+.perf-table tr:hover td { background:var(--tbl-hov); }
+.emp-avatar { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-size:10px; font-weight:600; margin-right:8px; vertical-align:middle; }
+.pill { display:inline-block; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:600; }
+.pill-green { background:rgba(34,197,94,.12); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+.pill-red   { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.2); }
+.prog-bg  { background:var(--prog-bg); border-radius:3px; height:5px; overflow:hidden; }
+.prog-fill{ height:100%; border-radius:3px; transition:width .5s ease; }
+.mono { font-family:'DM Mono',monospace; }
+.footer { text-align:center; padding:24px; font-size:11px; color:var(--text3); border-top:1px solid var(--border); margin-top:8px; }
+
+@media(max-width:900px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .grid2{grid-template-columns:1fr} .main{padding:16px} .topbar{padding:14px 16px} }
+@media(max-width:480px){ .kpi-grid{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-box">T</div>
+    <div>
+      <div class="topbar-title">Sales Performance Dashboard</div>
+      <div class="topbar-sub">Target vs Achievement · Jan – Dec 2021</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="badge-live"><span class="dot-live"></span>Power BI Connected</div>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">
+      <span id="themeIcon">☀️</span><span id="themeLabel">Light Mode</span>
+    </button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="filter-bar">
+    <div class="filter-group"><span class="filter-label">Employee</span>
+      <select id="fEmp"><option value="ALL">All Employees</option><option>NEERAJ</option><option>RINKU</option><option>MOHAN</option><option>RAJ KUMAR</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group"><span class="filter-label">Product</span>
+      <select id="fProd"><option value="ALL">All Products</option><option>P0024</option><option>P0025</option><option>P0026</option><option>P0027</option><option>P0028</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group"><span class="filter-label">Month</span>
+      <select id="fMonth"><option value="ALL">All Months</option><option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option><option>May</option><option>Jun</option><option>Jul</option><option>Aug</option><option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option></select>
+    </div>
+    <div class="filter-divider"></div>
+    <button class="reset-btn" onclick="resetFilters()">↺ Reset</button>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- ROW 1: Grouped Bar + Exploded Pie -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Revenue vs Target <span class="card-title-tag">By Employee</span></div>
+      <div class="legend" id="barLegend"></div>
+      <div style="position:relative;height:220px"><canvas id="empBar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Product Revenue Split <span class="card-title-tag">Exploded Pie</span></div>
+      <div style="position:relative;height:220px"><canvas id="prodPie"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Monthly line -->
+  <div class="grid1">
+    <div class="card">
+      <div class="card-title">Monthly Revenue Trend <span class="card-title-tag">All Employees</span></div>
+      <div class="legend" id="lineLeg"></div>
+      <div style="position:relative;height:230px"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Ribbon Chart -->
+  <div class="grid1">
+    <div class="card">
+      <div class="card-title">Achievement % Ribbon Chart <span class="card-title-tag">Monthly · All Employees</span></div>
+      <div class="legend" id="ribbonLeg"></div>
+      <div style="overflow-x:auto"><canvas id="ribbonChart" style="min-width:580px;height:280px"></canvas></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">Each bar = employee achievement % per month. Dashed line = 100% target.</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: Stacked + Table -->
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Revenue by Employee <span class="card-title-tag">Pie Chart</span></div>
+      <div style="position:relative;height:260px"><canvas id="stackBar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Performance Summary <span class="card-title-tag">Table</span></div>
+      <table class="perf-table">
+        <thead><tr><th>Employee</th><th>Revenue</th><th>Target</th><th>Ach%</th><th style="min-width:70px">Progress</th><th>Status</th></tr></thead>
+        <tbody id="sumTbl"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Sales Dashboard · Data sourced from Power BI Desktop · 2021</div>
+
+<script>
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const EMPS=['NEERAJ','RINKU','MOHAN','RAJ KUMAR'];
+const PRODS=['P0024','P0025','P0026','P0027','P0028'];
+const EC={NEERAJ:'#4f8ef7',RINKU:'#14b8a6',MOHAN:'#f59e0b','RAJ KUMAR':'#ec4899'};
+const EA={NEERAJ:'rgba(79,142,247,.15)',RINKU:'rgba(20,184,166,.15)',MOHAN:'rgba(245,158,11,.15)','RAJ KUMAR':'rgba(236,72,153,.15)'};
+const PC={P0024:'#818cf8',P0025:'#34d399',P0026:'#60a5fa',P0027:'#fb923c',P0028:'#f472b6'};
+const AV={NEERAJ:['#1e3a5f','#4f8ef7'],RINKU:['#0f3d38','#14b8a6'],MOHAN:['#3d2f0a','#f59e0b'],'RAJ KUMAR':['#3d0f27','#ec4899']};
+
+const monthly={
+  NEERAJ:    {rev:[10832,14415.5,7629.5,3957.1,7559.5,7904,11641.2,5057.2,9156,15146.9,15688.6,7177.6],tgt:[14637,12915,8610,5166,12054,8610,12054,8610,11193,8610,15498,7749]},
+  RINKU:     {rev:[10758,7151.9,6046.4,6364,7891.2,9899.1,12547.2,9619.3,9435.2,5616.5,10278,4893],tgt:[11310,8294,6786,7540,10556,9048,7540,9048,6786,6032,6786,8294]},
+  MOHAN:     {rev:[10354.1,3187.3,6498.3,4533.8,7782.3,11360.7,4831,8714.8,6777,6325.9,6353,17860.5],tgt:[6720,5760,9600,8640,9600,13440,7680,11520,11520,12480,7680,15360]},
+  'RAJ KUMAR':{rev:[9328,6102.6,8442.4,11724.2,7677.4,1369.9,6232.4,11959.1,9874.6,6411.4,3804.5,7167],tgt:[13328,6272,10976,10976,9408,3920,9408,10976,8624,4704,3920,6272]}
+};
+const empProd={
+  NEERAJ:    {P0024:15834.8,P0025:19345.7,P0026:30283.5,P0027:23409.1,P0028:27291.9},
+  RINKU:     {P0024:14741,P0025:21943.8,P0026:18415.8,P0027:23508.2,P0028:21891},
+  MOHAN:     {P0024:22226.4,P0025:22314.2,P0026:14735.1,P0027:19096.9,P0028:16206.2},
+  'RAJ KUMAR':{P0024:16856.2,P0025:15847.5,P0026:18837.3,P0027:26114.8,P0028:12437.7}
+};
+const empProdTgt={
+  NEERAJ:    {P0024:18942,P0025:23247,P0026:30996,P0027:25830,P0028:26691},
+  RINKU:     {P0024:12818,P0025:23374,P0026:20358,P0027:19604,P0028:21866},
+  MOHAN:     {P0024:26880,P0025:24960,P0026:23040,P0027:28800,P0028:16320},
+  'RAJ KUMAR':{P0024:18032,P0025:18816,P0026:19600,P0027:24304,P0028:18032}
+};
+
+let isDark=true, charts={};
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.getElementById('themeIcon').textContent=isDark?'☀️':'🌙';
+  document.getElementById('themeLabel').textContent=isDark?'Light Mode':'Dark Mode';
+  render();
+}
+
+function T(){
+  return isDark
+    ? {tick:'#555d70',grid:'rgba(255,255,255,0.04)',ref:'rgba(255,255,255,0.35)',tgt:'rgba(255,255,255,0.07)',tgtB:'rgba(255,255,255,0.22)',pieBdr:'#13161d',leg:'#8b92a8'}
+    : {tick:'#9ca3af',grid:'rgba(0,0,0,0.05)',      ref:'rgba(0,0,0,0.30)',      tgt:'rgba(0,0,0,0.05)',      tgtB:'rgba(0,0,0,0.18)',        pieBdr:'#ffffff',  leg:'#4b5563'};
+}
+
+function resetFilters(){document.getElementById('fEmp').value='ALL';document.getElementById('fProd').value='ALL';document.getElementById('fMonth').value='ALL';render();}
+
+function getEmpData(e,selMon,selProd){
+  if(selMon==='ALL'&&selProd==='ALL') return{rev:monthly[e].rev.reduce((a,b)=>a+b,0),tgt:monthly[e].tgt.reduce((a,b)=>a+b,0)};
+  if(selMon!=='ALL'&&selProd==='ALL'){const mi=MONTHS.indexOf(selMon);return{rev:monthly[e].rev[mi],tgt:monthly[e].tgt[mi]};}
+  if(selMon==='ALL'&&selProd!=='ALL') return{rev:empProd[e][selProd],tgt:empProdTgt[e][selProd]};
+  const mi=MONTHS.indexOf(selMon),share=monthly[e].rev[mi]/(monthly[e].rev.reduce((a,b)=>a+b,0)||1);
+  return{rev:empProd[e][selProd]*share,tgt:empProdTgt[e][selProd]*share};
+}
+
+function render(){
+  const selEmp=document.getElementById('fEmp').value;
+  const selProd=document.getElementById('fProd').value;
+  const selMon=document.getElementById('fMonth').value;
+  const emps=selEmp==='ALL'?EMPS:[selEmp];
+  const t=T();
+
+  const totByEmp={};
+  emps.forEach(e=>{const d=getEmpData(e,selMon,selProd);totByEmp[e]={...d,ach:d.rev/d.tgt*100};});
+  const totalRev=emps.reduce((s,e)=>s+totByEmp[e].rev,0);
+  const totalTgt=emps.reduce((s,e)=>s+totByEmp[e].tgt,0);
+  const overallAch=totalRev/totalTgt*100;
+  const top=emps.reduce((a,e)=>totByEmp[e].ach>totByEmp[a].ach?e:a,emps[0]);
+
+  /* KPIs */
+  document.getElementById('kpiGrid').innerHTML=[
+    {label:'Total Revenue',val:'₹'+(totalRev/1000).toFixed(1)+'K',sub:'Sum of all sales',color:'#4f8ef7'},
+    {label:'Total Target', val:'₹'+(totalTgt/1000).toFixed(1)+'K',sub:'Combined TGT',color:'#7c3aed'},
+    {label:'Overall Ach%', val:overallAch.toFixed(1)+'%',sub:overallAch>=100?'On target ✓':'Below target',color:overallAch>=100?'#22c55e':'#ef4444'},
+    {label:'Top Performer',val:top,sub:totByEmp[top].ach.toFixed(1)+'% achieved',color:'#f59e0b'},
+  ].map(k=>`<div class="kpi-card" style="--accent-color:${k.color}"><div class="kpi-label">${k.label}</div><div class="kpi-value mono" style="color:${k.color}">${k.val}</div><div class="kpi-footer"><span class="kpi-dot" style="background:${k.color}"></span>${k.sub}</div></div>`).join('');
+
+  /* Grouped Bar */
+  destroyChart('empBar');
+  document.getElementById('barLegend').innerHTML=`<div class="leg-item"><span class="leg-dot" style="background:#4f8ef7"></span>Revenue</div><div class="leg-item"><span class="leg-dot" style="background:#f97316"></span>Target</div>`;
+  charts['empBar']=new Chart(document.getElementById('empBar'),{type:'bar',data:{labels:emps,datasets:[
+    {label:'Revenue',data:emps.map(e=>Math.round(totByEmp[e].rev)),backgroundColor:emps.map(e=>EC[e]),borderRadius:5},
+    {label:'Target', data:emps.map(e=>Math.round(totByEmp[e].tgt)),backgroundColor:'#f9731688',borderColor:'#f97316',borderWidth:1.5,borderRadius:5}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+    x:{ticks:{color:t.tick,font:{size:11,family:'DM Sans'}},grid:{display:false},border:{display:false}},
+    y:{ticks:{color:t.tick,font:{size:10,family:'DM Mono'},callback:v=>'₹'+(v/1000).toFixed(0)+'K'},grid:{color:t.grid},border:{display:false}}
+  }}});
+
+  /* Exploded Pie — Product Revenue */
+  const prodRevs=PRODS.map(p=>emps.reduce((s,e)=>s+(selMon==='ALL'?empProd[e][p]:empProd[e][p]*(monthly[e].rev[MONTHS.indexOf(selMon)]/(monthly[e].rev.reduce((a,b)=>a+b,0)||1))),0));
+  const totalProd=prodRevs.reduce((a,b)=>a+b,0)||1;
+  destroyChart('prodPie');
+  charts['prodPie']=new Chart(document.getElementById('prodPie'),{
+    type:'pie',
+    data:{labels:PRODS,datasets:[{
+      data:prodRevs.map(v=>+v.toFixed(0)),
+      backgroundColor:PRODS.map(p=>PC[p]),
+      borderColor:t.pieBdr,
+      borderWidth:3,
+      hoverOffset:8,
+      offset:[16,10,6,10,16]
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{display:true,position:'right',labels:{font:{size:11,family:'DM Sans'},color:t.leg,boxWidth:9,padding:10}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ₹${(ctx.parsed/1000).toFixed(1)}K (${(ctx.parsed/totalProd*100).toFixed(1)}%)`}}
+    }}
+  });
+
+  /* Line — Monthly Revenue */
+  destroyChart('lineChart');
+  const lineMons=selMon==='ALL'?MONTHS:[selMon];
+  document.getElementById('lineLeg').innerHTML=emps.map(e=>`<div class="leg-item"><span class="leg-dot" style="background:${EC[e]}"></span>${e}</div>`).join('');
+  charts['lineChart']=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:lineMons,datasets:emps.map(e=>({
+    label:e,data:lineMons.map(m=>Math.round(monthly[e].rev[MONTHS.indexOf(m)])),
+    borderColor:EC[e],backgroundColor:EA[e],borderWidth:2,pointRadius:4,pointBackgroundColor:EC[e],pointHoverRadius:6,tension:.4,fill:false
+  }))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+    x:{ticks:{color:t.tick,font:{size:11,family:'DM Sans'},autoSkip:false,maxRotation:0},grid:{display:false},border:{display:false}},
+    y:{ticks:{color:t.tick,font:{size:10,family:'DM Mono'},callback:v=>'₹'+(v/1000).toFixed(0)+'K'},grid:{color:t.grid},border:{display:false}}
+  }}});
+
+  /* Ribbon Chart — Achievement % */
+  destroyChart('ribbonChart');
+  const ribbonMons=selMon==='ALL'?MONTHS:[selMon];
+  document.getElementById('ribbonLeg').innerHTML=emps.map(e=>`<div class="leg-item"><span class="leg-dot" style="background:${EC[e]}"></span>${e}</div>`).join('');
+  const refLinePlugin={id:'ref',afterDraw(chart){
+    const{ctx,chartArea,scales}=chart;
+    if(!scales.y)return;
+    const y100=scales.y.getPixelForValue(100);
+    if(y100<chartArea.top||y100>chartArea.bottom)return;
+    ctx.save();ctx.strokeStyle=t.ref;ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(chartArea.left,y100);ctx.lineTo(chartArea.right,y100);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle=t.tick;ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText('100% target',chartArea.right-4,y100-5);ctx.restore();
+  }};
+  charts['ribbonChart']=new Chart(document.getElementById('ribbonChart'),{
+    type:'bar',plugins:[refLinePlugin],
+    data:{labels:ribbonMons,datasets:emps.map(e=>({
+      label:e,
+      data:ribbonMons.map(m=>parseFloat((monthly[e].rev[MONTHS.indexOf(m)]/monthly[e].tgt[MONTHS.indexOf(m)]*100).toFixed(1))),
+      backgroundColor:EC[e]+'bb',borderColor:EC[e],borderWidth:1.5,borderRadius:4,borderSkipped:false
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{
+      title:ctx=>ctx[0].label,label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
+    }}},scales:{
+      x:{ticks:{color:t.tick,font:{size:11,family:'DM Sans'},autoSkip:false,maxRotation:0},grid:{display:false},border:{display:false}},
+      y:{ticks:{color:t.tick,font:{size:10,family:'DM Mono'},callback:v=>v+'%'},grid:{color:t.grid},border:{display:false},min:0}
+    }}
+  });
+
+  /* Pie Chart — Revenue by Employee */
+  destroyChart('stackBar');
+  const empRevs = emps.map(e => Math.round(totByEmp[e].rev));
+  const totalEmpRev = empRevs.reduce((a,b)=>a+b,0)||1;
+  charts['stackBar']=new Chart(document.getElementById('stackBar'),{
+    type:'pie',
+    data:{
+      labels: emps,
+      datasets:[{
+        data: empRevs,
+        backgroundColor: emps.map(e=>EC[e]),
+        borderColor: t.pieBdr,
+        borderWidth: 3,
+        hoverOffset: 8,
+        offset: emps.map((_,i)=>[16,10,10,16][i]||10)
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{display:true,position:'right',labels:{font:{size:11,family:'DM Sans'},color:t.leg,boxWidth:9,padding:10}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ₹${(ctx.parsed/1000).toFixed(1)}K (${(ctx.parsed/totalEmpRev*100).toFixed(1)}%)`}}
+    }}
+  });
+
+  /* Summary Table */
+  document.getElementById('sumTbl').innerHTML=emps.map(e=>{
+    const d=totByEmp[e],good=d.ach>=100,fw=Math.min(d.ach,130).toFixed(0);
+    const initials=e.split(' ').map(w=>w[0]).join('').slice(0,2);
+    return`<tr>
+      <td><span class="emp-avatar" style="background:${AV[e][0]};color:${AV[e][1]}">${initials}</span>${e}</td>
+      <td class="mono" style="color:${EC[e]}">₹${(d.rev/1000).toFixed(1)}K</td>
+      <td class="mono" style="color:var(--text3)">₹${(d.tgt/1000).toFixed(1)}K</td>
+      <td class="mono" style="color:${good?'#4ade80':'#f87171'};font-weight:600">${d.ach.toFixed(1)}%</td>
+      <td><div class="prog-bg"><div class="prog-fill" style="width:${fw}%;background:${good?'#22c55e':'#ef4444'}"></div></div></td>
+      <td><span class="pill ${good?'pill-green':'pill-red'}">${good?'On target':'Below'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+['fEmp','fProd','fMonth'].forEach(id=>document.getElementById(id).addEventListener('change',render));
+render();
+</script>
+</body>
+</html>
